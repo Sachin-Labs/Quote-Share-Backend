@@ -24,16 +24,16 @@ const quoteSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    createdBy: {
+    status: {
       type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    adminComment: { type: String, maxlength: 300, trim: true },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
-      trim: true,
-      maxlength: 40,
-      lowercase: true,
     },
   },
   { timestamps: true }

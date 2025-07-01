@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
 import quoteRouter from "./src/routes/quote.routes.js";
+import authRouter from "./src/routes/auth.routes.js";
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1/", quoteRouter);
+app.use("/api/v1/", authRouter);
 
 const PORT = process.env.PORT || 3000;
 
