@@ -1,18 +1,58 @@
 import Quote from "../models/Quote.js";
+import { v2 as cloudinary } from "cloudinary";
 
 // own routes
 
 export const getMyQuotes = async (req, res) => {
   try {
-    const emailId = req.user.emailId;
-
-    const quotes = await Quote.find({ createdBy: emailId }).sort({
+    const quotes = await Quote.find({ createdBy: req.user }).sort({
       createdAt: -1,
     });
-
     res.status(200).json({
       message: "Quotes fetched successfully",
-      data: quotes,
+      data: quotes.map((quote) => ({
+        id: quote._id,
+        quote: quote.quote,
+        author: quote.author,
+        caption: quote.caption,
+        imageUrl: quote.imageUrl,
+        status: quote.status,
+        createdAt: quote.createdAt,
+        createdBy: req.user.emailId,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getSingleQuote = async (req, res) => {
+  try {
+    const quote = await Quote.findById(req.params.id);
+    if (!quote) {
+      return res.status(404).json({ message: "Quote not found" });
+    }
+    if (quote.createdBy.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to view this quote" });
+    }
+    res.status(200).json({
+      message: "Quote fetched successfully",
+      data: {
+        id: quote._id,
+        quote: quote.quote,
+        id: quote._id,
+        quote: quote.quote,
+        author: quote.author,
+        socialLinks: quote.socialLinks,
+        caption: quote.caption,
+        imageUrl: quote.imageUrl,
+        status: quote.status,
+        createdAt: quote.createdAt,
+        createdBy: req.user.emailId,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -21,46 +61,121 @@ export const getMyQuotes = async (req, res) => {
 };
 
 export const postQuote = async (req, res) => {
+  const { quote, author, caption } = req.body;
+  const socialLinks = JSON.parse(req.body.socialLinks);
+
+  const cleanupImage = async () => {
+    if (req.file?.filename) {
+      try {
+        await cloudinary.uploader.destroy(req.file.filename);
+        console.log("Cloudinary image deleted:", req.file.filename);
+      } catch (err) {
+        console.error("Cloudinary cleanup failed:", err);
+      }
+    }
+  };
+
+  if (!quote || !author || !caption || !req.file) {
+    await cleanupImage();
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  const hasAtLeastOneLink = Object.values(socialLinks).some(
+    (link) => link && link.trim() !== ""
+  );
+
+  if (!hasAtLeastOneLink) {
+    await cleanupImage();
+    return res
+      .status(400)
+      .json({ message: "At least one social link is required" });
+  }
+
+  if (quote.length > 500 || author.length > 20 || caption.length > 40) {
+    await cleanupImage();
+    return res.status(400).json({ message: "Field lengths exceed limits" });
+  }
+
   try {
-    const { quote, author, caption, createdBy } = req.body;
-    console.log(req.body);
-    if (!quote || !author || !caption || !req.file || !createdBy) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-    if (
-      quote.length > 500 ||
-      author.length > 20 ||
-      caption.length > 40 ||
-      createdBy.length > 40
-    ) {
-      return res.status(400).json({ message: "Field lengths exceed limits" });
-    }
     const newQuote = await Quote.create({
       quote,
       author,
       caption,
       imageUrl: req.file.path,
       status: "pending",
-      createdBy,
+      createdBy: req.user,
+      socialLinks: {
+        instagram: socialLinks.instagram || "",
+        twitter: socialLinks.twitter || "",
+        facebook: socialLinks.facebook || "",
+        linkedin: socialLinks.linkedin || "",
+      },
     });
     res.status(201).json({
       message: "Quote created successfully",
-      data: newQuote,
+      data: {
+        quote: newQuote.quote,
+        author: newQuote.author,
+        caption: newQuote.caption,
+        imageUrl: newQuote.imageUrl,
+        status: newQuote.status,
+        createdBy: newQuote.createdBy.emailId,
+        socialLinks: newQuote.socialLinks,
+      },
     });
   } catch (err) {
-    console.log(err);
+    console.log("error", err);
+    await cleanupImage();
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
 export const editQuote = async (req, res) => {
+  const { quote, author, caption } = req.body;
+  const socialLinks = JSON.parse(req.body.socialLinks);
+
+  const cleanupImage = async () => {
+    if (req.file?.filename) {
+      try {
+        await cloudinary.uploader.destroy(req.file.filename);
+        console.log("Cloudinary image deleted:", req.file.filename);
+      } catch (err) {
+        console.error("Cloudinary cleanup failed:", err);
+      }
+    }
+
+    if (!quote || !author || !caption || !req.file) {
+      await cleanupImage();
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const hasAtLeastOneLink = Object.values(socialLinks).some(
+      (link) => link && link.trim() !== ""
+    );
+
+    if (!hasAtLeastOneLink) {
+      await cleanupImage();
+      return res
+        .status(400)
+        .json({ message: "At least one social link is required" });
+    }
+
+    if (quote.length > 500 || author.length > 20 || caption.length > 40) {
+      await cleanupImage();
+      return res.status(400).json({ message: "Field lengths exceed limits" });
+    }
+  };
   try {
-    const { quote, author, caption } = req.body;
     const existingQuote = await Quote.findById(req.params.id);
     if (!existingQuote) {
       return res.status(404).json({ message: "Quote not found" });
     }
-    if (existingQuote.createdBy !== req.user.emailId) {
+    if (existingQuote.createdBy.toString() !== req.user._id.toString()) {
+      console.log(
+        "User trying to edit a quote they do not own",
+        existingQuote.createdBy,
+        req.user.emailId
+      );
       return res
         .status(403)
         .json({ message: "You are not authorized to edit this quote" });
@@ -71,6 +186,15 @@ export const editQuote = async (req, res) => {
 
     if (!quote && !author && !caption && !req.file) {
       return res.status(400).json({ message: "No update data provided" });
+    }
+
+    if (socialLinks && typeof socialLinks === "object") {
+      existingQuote.socialLinks = {
+        facebook: socialLinks.facebook || "",
+        instagram: socialLinks.instagram || "",
+        twitter: socialLinks.twitter || "",
+        linkedin: socialLinks.linkedin || "",
+      };
     }
 
     existingQuote.quote = quote || existingQuote.quote;
@@ -176,14 +300,13 @@ export const getAllQuotes = async (req, res) => {
   }
 };
 
-
 export const getQuoteStats = async (req, res) => {
   try {
     let matchCondition = {};
 
     // If user is not admin, filter by their email
     if (req.user.role !== "admin") {
-      matchCondition.createdBy = req.user.emailId;
+      matchCondition.createdBy = req.user._id;
     }
 
     const stats = await Quote.aggregate([
@@ -191,30 +314,33 @@ export const getQuoteStats = async (req, res) => {
       {
         $group: {
           _id: "$status",
-          count: { $sum: 1 }
-        }
-      }
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
     const response = {
       approved: 0,
       pending: 0,
-      rejected: 0
+      rejected: 0,
+      total: 0,
     };
 
-    stats.forEach(stat => {
-      response[stat._id] = stat.count;
+    stats.forEach((stat) => {
+      if (["approved", "pending", "rejected"].includes(stat._id)) {
+        response[stat._id] = stat.count;
+        response.total += stat.count;
+      }
     });
 
     res.status(200).json({
       message: "Quote stats fetched successfully",
-      data: response
+      data: response,
     });
   } catch (err) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 // public routes
 export const getQuote = async (req, res) => {

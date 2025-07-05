@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import express from "express";
 import mongoose from "mongoose";
 import quoteRouter from "./src/routes/quote.routes.js";
@@ -15,11 +16,23 @@ app.use(
     credentials: true,
   })
 );
+app.use(cookieParser())
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1/", quoteRouter);
 app.use("/api/v1/", authRouter);
+app.use((err, req, res, next) => {
+  console.error("🔥 Multer/Cloudinary Upload Error:", err);
+
+  if (err.name === "MulterError") {
+    // Multer-specific errors
+    return res.status(400).json({ message: err.message });
+  }
+
+  // Cloudinary or other
+  return res.status(500).json({ message: "File upload failed", error: err.message });
+});
 
 const PORT = process.env.PORT || 3000;
 

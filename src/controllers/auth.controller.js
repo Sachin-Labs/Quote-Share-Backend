@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import {
   validateOTP,
   validateSignIn,
@@ -102,7 +103,7 @@ export const register = async (req, res) => {
       message: "User registered successfully",
     });
   } catch (e) {
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json(e.message);
   }
 };
 
@@ -128,7 +129,7 @@ export const login = async (req, res) => {
       })
       .json({ message: "Login successful" });
   } catch (e) {
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json(e.message);
   }
 };
 

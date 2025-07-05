@@ -1,20 +1,24 @@
+import jwt from "jsonwebtoken";
+import UserModel from "../models/User.js";
+
+
 export const authenticate = async (req, res, next) => {
-  try {
     const { token } = req.cookies;
+  try {
     if (!token) {
-      return res.status(401).send("User not authorised");
+      return res.status(401).send("User not authorized");
     }
-    const isAuthorised = await jwt.verify(token, process.env.JWT_SECRET);
-    const { _id } = isAuthorised;
-    const user = await UserModel.findById(_id);
+    const isAuthorised = jwt.verify(token, process.env.JWT_SECRET);    
+    const { id } = isAuthorised;
+    const user = await UserModel.findById(id);    
     if (!user) {
-      return res.status(401).send("User not authorised");
+      return res.status(401).send("User not authenticated");
     } else {
       req.user = user;
       next();
     }
   } catch (e) {
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "Something went wrong" });
   }
 };
 

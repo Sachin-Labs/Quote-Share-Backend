@@ -10,8 +10,8 @@ export const validateOTP = (req) => {
 };
 
 export const validateSignup = (req) => {
-  const { emailId, firstName, password } = req.body;
-  if (!emailId || !firstName || !password) {
+  const { emailId, name, password } = req.body;
+  if (!emailId || !name || !password) {
     throw new Error("All fields Required");
   } else if (!validator.isEmail(emailId)) {
     throw new Error("Enter valid EmailId");
@@ -20,7 +20,7 @@ export const validateSignup = (req) => {
   }
 };
 
-export const validateSignIn = () => {
+export const validateSignIn = (req) => {
   const { emailId, password } = req.body;
   if (!emailId || !password) {
     throw new Error("All fields are required");

@@ -12,13 +12,15 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: "quotes-app",
-    allowed_formats: ["jpg", "png", "jpeg"],
-    transformation: [{ width: 400, height: 400, crop: "limit" }],
+  params: (req, file) => {
+    return {
+      folder: "quotes-app",
+      allowed_formats: ["jpg", "png", "jpeg","webp"],
+      transformation: [{ width: 400, height: 400, crop: "limit" }],
+    };
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 1 * 1024 * 1024 }, });
 
 export { cloudinary, upload };

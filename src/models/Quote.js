@@ -29,6 +29,12 @@ const quoteSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    socialLinks: {
+      instagram: { type: String, trim: true },
+      twitter: { type: String, trim: true },
+      facebook: { type: String, trim: true },
+      linkedin: { type: String, trim: true },
+    },
     adminComment: { type: String, maxlength: 300, trim: true },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
