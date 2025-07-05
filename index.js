@@ -7,7 +7,6 @@ import quoteRouter from "./src/routes/quote.routes.js";
 import authRouter from "./src/routes/auth.routes.js";
 
 dotenv.config();
-const isProd = process.env.NODE_ENV === "production";
 const allowedOrigins = process.env.CORS_ORIGIN.split(",") || [];
 
 const app = express();
@@ -16,6 +15,7 @@ app.use(
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
+        
         return callback(null, true);
       }
       return callback(new Error("CORS not allowed for this origin"));

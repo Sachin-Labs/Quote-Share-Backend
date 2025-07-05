@@ -9,6 +9,9 @@ import { sendOtp } from "../utils/sendOtp.js";
 import Otp from "../models/Otp.js";
 import User from "../models/User.js";
 
+
+const isProd = process.env.NODE_ENV === "production";
+
 export const requestOtp = async (req, res) => {
   try {
     const { emailId } = req.body;
