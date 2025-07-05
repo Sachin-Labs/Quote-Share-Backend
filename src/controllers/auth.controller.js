@@ -96,7 +96,7 @@ export const register = async (req, res) => {
       emailId,
       name,
       password: hashedPassword,
-      role: 'user'
+      role: "user",
     });
     await Otp.deleteOne({ emailId });
     res.status(201).json({
@@ -126,6 +126,8 @@ export const login = async (req, res) => {
       .cookie("token", token, {
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
         httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? "None" : "Lax",
       })
       .json({ message: "Login successful" });
   } catch (e) {

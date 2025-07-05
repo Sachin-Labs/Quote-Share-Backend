@@ -7,6 +7,7 @@ import quoteRouter from "./src/routes/quote.routes.js";
 import authRouter from "./src/routes/auth.routes.js";
 
 dotenv.config();
+const isProd = process.env.NODE_ENV === "production";
 const allowedOrigins = process.env.CORS_ORIGIN.split(",") || [];
 
 const app = express();
