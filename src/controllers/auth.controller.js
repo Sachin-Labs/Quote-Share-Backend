@@ -122,9 +122,10 @@ export const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(400).json({ message: "Details Mismatch" });
     }
-    const token = await jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
+    console.log(isProd)
     res
       .cookie("token", token, {
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),

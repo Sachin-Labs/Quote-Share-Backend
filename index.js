@@ -7,7 +7,7 @@ import quoteRouter from "./src/routes/quote.routes.js";
 import authRouter from "./src/routes/auth.routes.js";
 
 dotenv.config();
-const allowedOrigins = process.env.CORS_ORIGIN.split(",") || [];
+const allowedOrigins = process.env.CORS_ORIGIN.split(",").map(origin => origin.trim());
 
 const app = express();
 app.use(
@@ -18,7 +18,7 @@ app.use(
         
         return callback(null, true);
       }
-      return callback(new Error("CORS not allowed for this origin"));
+      return callback(new Error("CORS not allowed for this origin" + origin));
     },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
