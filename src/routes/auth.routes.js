@@ -12,7 +12,7 @@ Router.post('/login/', login);
 Router.get('/logout/', logout);
 
 Router.get('/verify', authenticate, (req,res)=>{
-    res.status(200).json({ message: "User is authenticated", user: {name: req.user.name, emailId: req.user.emailId} });
+    res.status(200).json({ message: "User is authenticated", user: {name: req.user.name, emailId: req.user.emailId, role:req.user.role} });
 })
 
 

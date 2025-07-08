@@ -34,6 +34,7 @@ const quoteSchema = new mongoose.Schema(
       twitter: { type: String, trim: true },
       facebook: { type: String, trim: true },
       linkedin: { type: String, trim: true },
+      website: { type: String, trim: true },
     },
     adminComment: { type: String, maxlength: 300, trim: true },
     createdBy: {

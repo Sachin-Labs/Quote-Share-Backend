@@ -9,7 +9,6 @@ import { sendOtp } from "../utils/sendOtp.js";
 import Otp from "../models/Otp.js";
 import User from "../models/User.js";
 
-
 const isProd = process.env.NODE_ENV === "production";
 
 export const requestOtp = async (req, res) => {
@@ -125,7 +124,6 @@ export const login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
-    console.log(isProd)
     res
       .cookie("token", token, {
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),

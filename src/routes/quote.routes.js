@@ -15,10 +15,10 @@ router.get("/quote-stats", authenticate, getQuoteStats);
 
 //admin routes
 router.get("/quotes", authenticate, isAdmin, getAllQuotes);
-router.put('approve/quote/:id', authenticate, isAdmin, approveQuote); 
-router.put('reject/quote/:id', authenticate, isAdmin, rejectQuote); 
+router.put('/approve/quote/:id', authenticate, isAdmin, approveQuote); 
+router.put('/reject/quote/:id', authenticate, isAdmin, rejectQuote); 
 
 // public routes
-router.get("/quote/", getQuote);
+router.get("/quote", getQuote);
 
 export default router;

@@ -4,6 +4,7 @@ import UserModel from "../models/User.js";
 
 export const authenticate = async (req, res, next) => {
     const { token } = req.cookies;
+    console.log('token',token)
   try {
     if (!token) {
       return res.status(401).send("User not authorized");
@@ -11,6 +12,7 @@ export const authenticate = async (req, res, next) => {
     const isAuthorised = jwt.verify(token, process.env.JWT_SECRET);    
     const { id } = isAuthorised;
     const user = await UserModel.findById(id);    
+    console.log('user',user)
     if (!user) {
       return res.status(401).send("User not authenticated");
     } else {

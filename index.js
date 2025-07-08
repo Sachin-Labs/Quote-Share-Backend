@@ -15,7 +15,6 @@ app.use(
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
-        
         return callback(null, true);
       }
       return callback(new Error("CORS not allowed for this origin" + origin));
@@ -27,18 +26,14 @@ app.use(
 app.use(cookieParser())
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use("/api/v1/", quoteRouter);
 app.use("/api/v1/", authRouter);
-app.use((err, req, res, next) => {
-  console.error("🔥 Multer/Cloudinary Upload Error:", err);
 
+app.use((err, req, res, next) => {
+  console.error("Multer/Cloudinary Upload Error:", err);
   if (err.name === "MulterError") {
-    // Multer-specific errors
     return res.status(400).json({ message: err.message });
   }
-
-  // Cloudinary or other
   return res.status(500).json({ message: "File upload failed", error: err.message });
 });
 

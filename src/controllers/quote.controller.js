@@ -109,6 +109,7 @@ export const postQuote = async (req, res) => {
         twitter: socialLinks.twitter || "",
         facebook: socialLinks.facebook || "",
         linkedin: socialLinks.linkedin || "",
+        website: socialLinks.website || "",
       },
     });
     res.status(201).json({
@@ -194,6 +195,7 @@ export const editQuote = async (req, res) => {
         instagram: socialLinks.instagram || "",
         twitter: socialLinks.twitter || "",
         linkedin: socialLinks.linkedin || "",
+        website: socialLinks.website || "",
       };
     }
 
@@ -246,9 +248,15 @@ export const deleteQuote = async (req, res) => {
 export const approveQuote = async (req, res) => {
   try {
     const { id } = req.params;
+    const { comment } = req.body;
+    if (!comment || comment.length > 300) {
+      return res.status(400).json({
+        message: "Comment is required and must be less than 300 characters",
+      });
+    }
     const quote = await Quote.findByIdAndUpdate(
       id,
-      { status: "approved" },
+      { status: "approved", adminComment: comment },
       { new: true }
     );
     if (!quote) return res.status(404).json({ message: "Quote not found" });

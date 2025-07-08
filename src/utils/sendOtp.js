@@ -12,23 +12,24 @@ const transporter = nodemailer.createTransport({
 });
 
 
+
 export const sendOtp = async ({ emailId, otp }) => {
   try {
     const mailOptions = {
-      from: "balagamsachin337@gmail.com",
+      from: "noreply@quoteshare.work.gd",
       to: emailId,
       subject: "Verification Mail",
       text: `Your OTP is: ${otp}. It is valid for 5 minutes.`,
     };
-    // await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
     // console.log(mailOptions)
-    transporter.verify((err,success)=>{
-      if(err){
-        console.log(err.message)
-      }else{
-        console.log("Connected Successfully")
-      }
-    })
+    // transporter.verify((err,success)=>{
+    //   if(err){
+    //     console.log(err.message)
+    //   }else{
+    //     console.log("Connected Successfully")
+    //   }
+    // })
   } catch (e) {
     console.log("Error sending Mail");
     throw new Error(e.message);
