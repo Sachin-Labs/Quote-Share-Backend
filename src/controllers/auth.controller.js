@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import {
+  isValidGmail,
   validateOTP,
   validateSignIn,
   validateSignup,
@@ -15,6 +16,11 @@ export const requestOtp = async (req, res) => {
   try {
     const { emailId } = req.body;
     validateOTP(req);
+    if (!isValidGmail(emailId)) {
+      return res
+        .status(400)
+        .json({ message: "Only Gmail addresses are allowed." });
+    }
     const dbOtp = await Otp.findOne({ emailId });
     if (dbOtp) {
       if (dbOtp.count >= 5) {
@@ -52,6 +58,11 @@ export const verifyOtp = async (req, res) => {
   try {
     const { emailId, otp } = req.body;
     validateOTP(req);
+    if (!isValidGmail(emailId)) {
+      return res
+        .status(400)
+        .json({ message: "Only Gmail addresses are allowed." });
+    }
     const dbUser = await User.findOne({ emailId });
     if (dbUser) {
       return res.status(400).json({ message: "User already exists" });
@@ -83,6 +94,11 @@ export const register = async (req, res) => {
   try {
     const { emailId, name, password } = req.body;
     validateSignup(req);
+    if (!isValidGmail(emailId)) {
+      return res
+        .status(400)
+        .json({ message: "Only Gmail addresses are allowed." });
+    }
     const otpUser = await Otp.findOne({ emailId });
     if (!otpUser || !otpUser.verified) {
       return res

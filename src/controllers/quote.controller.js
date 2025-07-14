@@ -61,141 +61,104 @@ export const getSingleQuote = async (req, res) => {
 };
 
 export const postQuote = async (req, res) => {
-  const { quote, author, caption } = req.body;
-  const socialLinks = JSON.parse(req.body.socialLinks);
-
-  const cleanupImage = async () => {
-    if (req.file?.filename) {
-      try {
-        await cloudinary.uploader.destroy(req.file.filename);
-        console.log("Cloudinary image deleted:", req.file.filename);
-      } catch (err) {
-        console.error("Cloudinary cleanup failed:", err);
-      }
-    }
-  };
-
-  if (!quote || !author || !caption || !req.file) {
-    await cleanupImage();
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
-  const hasAtLeastOneLink = Object.values(socialLinks).some(
-    (link) => link && link.trim() !== ""
-  );
-
-  if (!hasAtLeastOneLink) {
-    await cleanupImage();
-    return res
-      .status(400)
-      .json({ message: "At least one social link is required" });
-  }
-
-  if (quote.length > 500 || author.length > 20 || caption.length > 40) {
-    await cleanupImage();
-    return res.status(400).json({ message: "Field lengths exceed limits" });
-  }
-
   try {
-    const newQuote = await Quote.create({
-      quote,
-      author,
-      caption,
-      imageUrl: req.file.path,
-      status: "pending",
-      createdBy: req.user,
-      socialLinks: {
-        instagram: socialLinks.instagram || "",
-        twitter: socialLinks.twitter || "",
-        facebook: socialLinks.facebook || "",
-        linkedin: socialLinks.linkedin || "",
-        website: socialLinks.website || "",
-      },
-    });
-    res.status(201).json({
-      message: "Quote created successfully",
-      data: {
-        quote: newQuote.quote,
-        author: newQuote.author,
-        caption: newQuote.caption,
-        imageUrl: newQuote.imageUrl,
-        status: newQuote.status,
-        createdBy: newQuote.createdBy.emailId,
-        socialLinks: newQuote.socialLinks,
-      },
-    });
-  } catch (err) {
-    console.log("error", err);
-    await cleanupImage();
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
+    const { quote, author, caption, imageUrl, socialLinks } = req.body;
 
-export const editQuote = async (req, res) => {
-  const { quote, author, caption } = req.body;
-  const socialLinks = JSON.parse(req.body.socialLinks);
-
-  const cleanupImage = async () => {
-    if (req.file?.filename) {
-      try {
-        await cloudinary.uploader.destroy(req.file.filename);
-        console.log("Cloudinary image deleted:", req.file.filename);
-      } catch (err) {
-        console.error("Cloudinary cleanup failed:", err);
-      }
-    }
-
-    if (!quote || !author || !caption || !req.file) {
-      await cleanupImage();
+    if (!quote || !author || !caption || !imageUrl) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const hasAtLeastOneLink = Object.values(socialLinks).some(
+    const parsedLinks =
+      typeof socialLinks === "string" ? JSON.parse(socialLinks) : socialLinks;
+
+    const hasAtLeastOneLink = Object.values(parsedLinks).some(
       (link) => link && link.trim() !== ""
     );
 
     if (!hasAtLeastOneLink) {
-      await cleanupImage();
       return res
         .status(400)
         .json({ message: "At least one social link is required" });
     }
 
     if (quote.length > 500 || author.length > 20 || caption.length > 40) {
-      await cleanupImage();
       return res.status(400).json({ message: "Field lengths exceed limits" });
     }
-  };
+
+    const newQuote = await Quote.create({
+      quote,
+      author,
+      caption,
+      imageUrl,
+      status: "pending",
+      createdBy: req.user,
+      socialLinks: {
+        facebook: parsedLinks.facebook || "",
+        instagram: parsedLinks.instagram || "",
+        twitter: parsedLinks.twitter || "",
+        linkedin: parsedLinks.linkedin || "",
+        website: parsedLinks.website || "",
+      },
+    });
+
+    res.status(201).json({
+      message: "Quote created successfully",
+      data: {
+        ...newQuote.toObject(),
+        createdBy: newQuote.createdBy.emailId,
+      },
+    });
+  } catch (err) {
+    console.error("Post quote error:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const editQuote = async (req, res) => {
   try {
+    const { quote, author, caption, imageUrl, socialLinks } = req.body;
+    const parsedLinks =
+      typeof socialLinks === "string" ? JSON.parse(socialLinks) : socialLinks;
+
     const existingQuote = await Quote.findById(req.params.id);
     if (!existingQuote) {
       return res.status(404).json({ message: "Quote not found" });
     }
+
     if (existingQuote.createdBy.toString() !== req.user._id.toString()) {
-      console.log(
-        "User trying to edit a quote they do not own",
-        existingQuote.createdBy,
-        req.user.emailId
-      );
       return res
         .status(403)
         .json({ message: "You are not authorized to edit this quote" });
     }
+
     if (existingQuote.status === "approved") {
       return res.status(400).json({ message: "Cannot edit an approved quote" });
     }
 
-    if (!quote && !author && !caption && !req.file) {
+    if (!quote && !author && !caption && !imageUrl && !socialLinks) {
       return res.status(400).json({ message: "No update data provided" });
     }
 
-    if (socialLinks && typeof socialLinks === "object") {
+    const hasAtLeastOneLink =
+      parsedLinks &&
+      typeof parsedLinks === "object" &&
+      Object.values(parsedLinks).some(
+        (link) => link && link.trim() !== ""
+      );
+
+    if (!hasAtLeastOneLink) {
+      return res
+        .status(400)
+        .json({ message: "At least one social link is required" });
+    }
+
+    if (parsedLinks && typeof parsedLinks === "object") {
       existingQuote.socialLinks = {
-        facebook: socialLinks.facebook || "",
-        instagram: socialLinks.instagram || "",
-        twitter: socialLinks.twitter || "",
-        linkedin: socialLinks.linkedin || "",
-        website: socialLinks.website || "",
+        facebook: parsedLinks.facebook || "",
+        instagram: parsedLinks.instagram || "",
+        twitter: parsedLinks.twitter || "",
+        linkedin: parsedLinks.linkedin || "",
+        website: parsedLinks.website || "",
       };
     }
 
@@ -203,18 +166,22 @@ export const editQuote = async (req, res) => {
     existingQuote.author = author || existingQuote.author;
     existingQuote.caption = caption || existingQuote.caption;
 
+    if (imageUrl) {
+      existingQuote.imageUrl = imageUrl;
+    }
+
     existingQuote.status = "pending";
     existingQuote.isVerified = false;
     existingQuote.adminComment = "";
 
-    if (req.file) {
-      existingQuote.imageUrl = req.file.path;
-    }
     const updatedQuote = await existingQuote.save();
-    res
-      .status(200)
-      .json({ message: "Quote updated successfully", data: updatedQuote });
+
+    res.status(200).json({
+      message: "Quote updated successfully",
+      data: updatedQuote,
+    });
   } catch (err) {
+    console.error("Edit quote error:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

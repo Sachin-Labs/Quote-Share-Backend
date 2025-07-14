@@ -9,6 +9,13 @@ export const validateOTP = (req) => {
   }
 };
 
+export const isValidGmail = (emailId) => {
+  return (
+    typeof emailId === "string" &&
+    emailId.toLowerCase().endsWith("@gmail.com")
+  );
+};
+
 export const validateSignup = (req) => {
   const { emailId, name, password } = req.body;
   if (!emailId || !name || !password) {

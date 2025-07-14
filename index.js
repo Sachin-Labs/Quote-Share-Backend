@@ -5,9 +5,12 @@ import express from "express";
 import mongoose from "mongoose";
 import quoteRouter from "./src/routes/quote.routes.js";
 import authRouter from "./src/routes/auth.routes.js";
+import imageRouter from "./src/routes/image.routes.js";
 
 dotenv.config();
-const allowedOrigins = process.env.CORS_ORIGIN.split(",").map(origin => origin.trim());
+const allowedOrigins = process.env.CORS_ORIGIN.split(",").map((origin) =>
+  origin.trim()
+);
 
 const app = express();
 app.use(
@@ -23,18 +26,21 @@ app.use(
     credentials: true,
   })
 );
-app.use(cookieParser())
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/", quoteRouter);
 app.use("/api/v1/", authRouter);
+app.use("/api/v1/", imageRouter);
 
 app.use((err, req, res, next) => {
   console.error("Multer/Cloudinary Upload Error:", err);
   if (err.name === "MulterError") {
     return res.status(400).json({ message: err.message });
   }
-  return res.status(500).json({ message: "File upload failed", error: err.message });
+  return res
+    .status(500)
+    .json({ message: "File upload failed", error: err.message });
 });
 
 const PORT = process.env.PORT || 3000;
