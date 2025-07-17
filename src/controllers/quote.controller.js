@@ -17,6 +17,7 @@ export const getMyQuotes = async (req, res) => {
         caption: quote.caption,
         imageUrl: quote.imageUrl,
         status: quote.status,
+        adminComment:quote.adminComment,
         createdAt: quote.createdAt,
         createdBy: req.user.emailId,
       })),

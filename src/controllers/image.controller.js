@@ -8,6 +8,7 @@ export const uploadImage = async (req, res) => {
         .json({ message: "User ID and image file are required." });
     }
 
+    // console.log(req.user.role)
     if (req.user.role !== "admin") {
       const imageCount = await Image.countDocuments({ userId: req.user._id });
       if (imageCount >= 20) {
@@ -29,7 +30,7 @@ export const uploadImage = async (req, res) => {
       imageUrl: newImage.imageUrl,
     });
   } catch (e) {
-    console.log(e.message);
+    // console.log(e.message);
     res.status(500).json({ message: "Image upload failed" });
   }
 };

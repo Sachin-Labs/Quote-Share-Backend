@@ -31,7 +31,7 @@ export const sendOtp = async ({ emailId, otp }) => {
     //   }
     // })
   } catch (e) {
-    console.log("Error sending Mail");
+    // console.log("Error sending Mail");
     throw new Error(e.message);
   }
 };
