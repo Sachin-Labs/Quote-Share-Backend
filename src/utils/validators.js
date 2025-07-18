@@ -23,7 +23,7 @@ export const validateSignup = (req) => {
   } else if (!validator.isEmail(emailId)) {
     throw new Error("Enter valid EmailId");
   } else if (!validator.isStrongPassword(password)) {
-    throw new Error("Enter Strong Password");
+    throw new Error("Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one special character.");
   }
 };
 
