@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
 
-
 const transporter = nodemailer.createTransport({
   host: process.env.BREVO_URI,
   port: process.env.BREVO_PORT,
@@ -11,15 +10,31 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-
-
 export const sendOtp = async ({ emailId, otp }) => {
   try {
     const mailOptions = {
       from: "noreply@quoteshare.work.gd",
       to: emailId,
-      subject: "Verification Mail",
-      text: `Your OTP is: ${otp}. It is valid for 5 minutes.`,
+      subject: "Your One-Time Password (OTP) for QuoteShare",
+      text: `Hello,
+
+Thank you for using QuoteShare! To verify your email address and continue, please use the One-Time Password (OTP) below:
+
+OTP: ${otp}
+
+This OTP is valid for the next 3 minutes. Please do not share it with anyone.
+
+If you did not request this OTP, you can safely ignore this message. Your account remains secure.
+
+Need help or have questions? Reach out to us anytime at balagamsachin337@gmail.com
+
+Best wishes,  
+Team QuoteShare
+
+—
+
+QuoteShare is a platform where creativity meets daily inspiration. Thank you for being part of our journey!
+`,
     };
     await transporter.sendMail(mailOptions);
     // console.log(mailOptions)

@@ -74,7 +74,7 @@ export const verifyOtp = async (req, res) => {
     if (dbOtp.otp !== otp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
-    if (dbOtp.expires < new Date()) {
+    if (new Date(dbOtp.expires).getTime() < Date.now()) {
       return res.status(400).json({ message: "OTP has expired" });
     }
     if (dbOtp.verified === true) {
@@ -85,6 +85,82 @@ export const verifyOtp = async (req, res) => {
       await dbOtp.save();
       res.status(200).send({ message: "Otp Verified Successfully" });
     }
+  } catch (e) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const requestForgotOtp = async (req, res) => {
+  try {
+    const { emailId } = req.body;
+    validateOTP(req);
+    if (!isValidGmail(emailId)) {
+      return res
+        .status(400)
+        .json({ message: "Only Gmail addresses are allowed." });
+    }
+
+    const userExists = await User.findOne({ emailId });
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const existingOtp = await Otp.findOne({ emailId });
+
+    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiryTime = new Date(Date.now() + 5 * 60 * 1000);
+
+    if (existingOtp) {
+      if (existingOtp.count >= 5) {
+        return res
+          .status(400)
+          .json({ message: "OTP request limit exceeded. Try again later." });
+      }
+      existingOtp.count += 1;
+      existingOtp.otp = newOtp;
+      existingOtp.expires = expiryTime;
+      existingOtp.verified = false;
+      await sendOtp({ emailId, otp: newOtp });
+      await existingOtp.save();
+      return res.status(200).json({ message: "OTP sent successfully" });
+    }
+
+    await Otp.create({
+      emailId,
+      otp: newOtp,
+      expires: expiryTime,
+      count: 1,
+      verified: false,
+    });
+    await sendOtp({ emailId, otp: newOtp });
+    return res.status(201).json({ message: "OTP sent successfully" });
+  } catch (e) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const verifyForgotOtp = async (req, res) => {
+  try {
+    const { emailId, otp } = req.body;
+    validateOTP(req);
+
+    const dbUser = await User.findOne({ emailId });
+    if (!dbUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const dbOtp = await Otp.findOne({ emailId });
+    if (!dbOtp || dbOtp.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (new Date(dbOtp.expires).getTime() < Date.now()) {
+      return res.status(400).json({ message: "OTP has expired" });
+    }
+
+    dbOtp.verified = true;
+    await dbOtp.save();
+    res.status(200).send({ message: "OTP verified for password reset" });
   } catch (e) {
     res.status(500).json({ message: "Internal Server Error" });
   }
@@ -150,6 +226,45 @@ export const login = async (req, res) => {
       .json({ message: "Login successful" });
   } catch (e) {
     res.status(500).json(e.message);
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { emailId, newPassword } = req.body;
+
+    // Check email validity
+    if (!isValidGmail(emailId)) {
+      return res
+        .status(400)
+        .json({ message: "Only Gmail addresses are allowed." });
+    }
+
+    // Check if OTP was verified
+    const otpUser = await Otp.findOne({ emailId });
+    if (!otpUser || !otpUser.verified) {
+      return res
+        .status(400)
+        .json({ message: "Please verify OTP before resetting password" });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Hash and update new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    // Invalidate OTP
+    await Otp.deleteOne({ emailId });
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (e) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
