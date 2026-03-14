@@ -22,23 +22,24 @@ export const requestOtp = async (req, res) => {
         .json({ message: "Only Gmail addresses are allowed." });
     }
     const dbOtp = await Otp.findOne({ emailId });
+    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiryTime = new Date(Date.now() + 5 * 60 * 1000);
+
     if (dbOtp) {
       if (dbOtp.count >= 5) {
         return res
           .status(400)
           .json({ message: "OTP request limit exceeded. Try again later." });
       }
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiryTime = new Date(Date.now() + 5 * 60 * 1000);
       dbOtp.count = (dbOtp.count || 0) + 1;
       dbOtp.otp = newOtp;
+      dbOtp.expires = expiryTime;
+      dbOtp.verified = false;
       await sendOtp({ emailId, otp: newOtp });
       await dbOtp.save();
       res.status(200).json({ message: "OTP sent successfully" });
     } else {
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiryTime = new Date(Date.now() + 5 * 60 * 1000);
-      const otp = await Otp.create({
+      await Otp.create({
         emailId,
         otp: newOtp,
         count: 1,
@@ -46,10 +47,13 @@ export const requestOtp = async (req, res) => {
         verified: false,
       });
       await sendOtp({ emailId, otp: newOtp });
-      await otp.save();
       res.status(201).json({ message: "OTP sent successfully" });
     }
   } catch (e) {
+    console.error("requestOtp Error:", e);
+    if (e.message.includes("Required") || e.message.includes("valid EmailId")) {
+      return res.status(400).json({ message: e.message });
+    }
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
