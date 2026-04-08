@@ -3,15 +3,15 @@ import UserModel from "../models/User.js";
 
 
 export const authenticate = async (req, res, next) => {
-    const { token } = req.cookies;
-    // console.log('token',token)
+  const { token } = req.cookies;
+  // console.log('token',token)
   try {
     if (!token) {
       return res.status(401).send("User not authorized");
     }
-    const isAuthorised = jwt.verify(token, process.env.JWT_SECRET);    
+    const isAuthorised = jwt.verify(token, process.env.JWT_SECRET);
     const { id } = isAuthorised;
-    const user = await UserModel.findById(id);    
+    const user = await UserModel.findById(id);
     // console.log('user',user)
     if (!user) {
       return res.status(401).send("User not authenticated");
@@ -20,7 +20,7 @@ export const authenticate = async (req, res, next) => {
       next();
     }
   } catch (e) {
-    return res.status(500).json({ message: "Something went wrong" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 

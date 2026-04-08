@@ -223,7 +223,7 @@ export const login = async (req, res) => {
     res
       .cookie("token", token, {
         expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        httpOnly: false,
+        httpOnly: true,
         secure: isProd,
         sameSite: isProd ? "None" : "Lax",
       })
@@ -276,6 +276,8 @@ export const logout = async (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "None" : "Lax",
     });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
